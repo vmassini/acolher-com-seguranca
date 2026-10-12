@@ -4,6 +4,8 @@ Jogo de treinamento do POP do NSP **"Identificação e manejo de pessoas com com
 ameaçador no AME Rio Claro"** (18/02/2026). Para todas as funções do AME: recepção, controle de acesso,
 enfermagem, médicos, psicologia, serviço social, gestão e NSP. Funciona no celular e no computador.
 
+**Demo:** https://vmassini.github.io/acolher-com-seguranca/
+
 ## Como rodar
 
 Página estática. Qualquer servidor HTTP serve:
