@@ -104,6 +104,14 @@ h1, h2, h3 { font-family: 'Nunito', 'Inter', sans-serif; line-height: 1.15; }
 .carta.feita.ruim { background: var(--perigo-2); border-color: #f2c4c4; }
 .carta.ocupada { background: var(--amarelo-2); }
 .carta:disabled { cursor: default; }
+.retorno { border-radius: 12px; padding: 9px 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.4; animation: entra .2s ease; }
+.retorno.ok { background: var(--ok-2); } .retorno.aviso { background: var(--aviso-2); } .retorno.ruim { background: var(--perigo-2); }
+.retorno small { color: var(--texto-2); font-size: 12px; }
+.retorno p { margin: 3px 0 2px; }
+.retorno .efeito { display: block; font-weight: 600; }
+.resp-pop { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.resp-pop li { padding: 8px 11px; background: #f5f8f9; border-radius: 10px; font-size: 13.5px; line-height: 1.45; }
+.resp-pop b { display: block; }
 .detalhe { border: 1px solid var(--borda); border-radius: 14px; padding: 10px 12px; animation: entra .2s ease; }
 .det-topo { display: grid; grid-template-columns: 34px 1fr 30px; gap: 10px; align-items: start; }
 .det-topo .ic { font-size: 28px; }

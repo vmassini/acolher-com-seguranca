@@ -296,7 +296,12 @@ function posicionarCamera(C, imediato) {
 // ------------------------------------------------------------------------------------------------ montar um caso
 const CORES_PUBLICO = [0x8e6f9e, 0xc0784a, 0x4f8a8b, 0xa8a23a, 0x6a7fb5, 0xb55a6a, 0x5e8f5a, 0x9b7b5b, 0x4a6a8a, 0xc29a3a, 0x7a5aa8, 0x3f7f6f];
 export function montarCaso(C, caso, rnd = Math.random) {
-  for (const p of C.pessoas) C.scene.remove(p.g);
+  // libera os bonecos do caso anterior (cada um tem geometrias e materiais proprios)
+  for (const p of C.pessoas) {
+    C.scene.remove(p.g);
+    p.g.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+    if (p.alvo) { p.alvo.res(); p.alvo = null; }
+  }
   C.pessoas = []; C.publico = []; C.equipe = {};
   const add = p => { C.pessoas.push(p); C.scene.add(p.g); return p; };
   const pp = caso.pessoa, lugar = LUGARES[pp.lugar];

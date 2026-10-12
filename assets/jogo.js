@@ -1,4 +1,4 @@
-// Fluxo do jogo: escolher funcao -> caso -> observar sinais -> agir (tempo real) -> conversar ->
+// Fluxo do jogo: caso -> observar sinais -> agir (tempo da cena por acao) -> conversar ->
 // encaminhar e registrar -> resultado com o check list do Anexo 1 do POP.
 import * as CENA from './cena.js';
 import { CASOS, ACOES, PAPEIS, PAPEIS_CENA, ENCAMINHAMENTOS, REGISTRO, FONTES } from './casos.js';
@@ -12,10 +12,13 @@ const lerLocal = (k, pad) => { try { return JSON.parse(localStorage.getItem(k)) 
 const gravarLocal = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento */ } };
 
 const C = CENA.criarCena($('#tela'));
-const J = { funcao: lerLocal('acolher.funcao', null), progresso: lerLocal('acolher.progresso', {}), fase: 'mapa', caso: null, R: null };
+const J = { progresso: lerLocal('acolher.progresso', {}), fase: 'mapa', caso: null, R: null };
 window.acolher = { J, C };
 
-const TEMPO_MAX = 180;
+// Sem cronometro: cada acao leva um tempo da cena (segundos simulados) e so nesse tempo a tensao
+// muda conforme o ambiente. Quem precisa ser acionado leva mais 30 s para chegar.
+const DURACAO = { conduta: 30, ambiente: 30, comunicacao: 30, equipe: 45, armadilha: 20 };
+const CHEGADA = 30, FALA = 20, SEG_POR_PASSO = 8, TEMPO_LIMITE = 600;
 const TEXTO_MEDICO = {
   espera: 'Dr. Paulo avalia: dor lombar forte. Vai medicar e priorizar a consulta.',
   sensorial: 'Dr. Paulo avalia: sem lesão. A consulta segue quando Lucas estiver regulado.',
@@ -26,17 +29,6 @@ const TEXTO_MEDICO = {
 };
 
 // ================================================================================================ telas
-function telaFuncao() {
-  J.fase = 'mapa';
-  abrirModal(`<div class="capa"><span class="selo">NSP · SEGURANÇA DO PACIENTE</span>
-    <h1>Acolher com Segurança</h1>
-    <p class="sub">Comportamento agitado ou ameaçador no AME</p></div>
-    <p>Situações reais de sala de espera. Você observa, decide o que fazer, quem faz e o que dizer. No fim, cada caso mostra o check list do POP.</p>
-    <h3>Qual é a sua função no AME?</h3>
-    <div class="grade-papeis">${Object.entries(PAPEIS).map(([k, p]) => `<button class="papel ${J.funcao === k ? 'ativo' : ''}" data-f="${k}"><span>${p.icone}</span><b>${p.nome}</b><small>${esc(p.pop)}</small></button>`).join('')}</div>`);
-  document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { J.funcao = b.dataset.f; gravarLocal('acolher.funcao', J.funcao); telaMapa(); });
-}
-
 function telaMapa() {
   J.fase = 'mapa'; J.caso = null; J.R = null;
   $('#hud-tensao').hidden = true; $('#hud-tempo').hidden = true;
@@ -44,15 +36,18 @@ function telaMapa() {
   limparSobre();
   const total = Object.values(J.progresso).reduce((a, p) => a + (p.pontos || 0), 0);
   const feitos = Object.keys(J.progresso).length;
-  abrirModal(`<h2>Casos</h2>
-    <p class="sub">${PAPEIS[J.funcao]?.icone || ''} ${esc(PAPEIS[J.funcao]?.nome || '')} · <a href="#" id="trocar">trocar função</a> · ${feitos} de ${CASOS.length} feitos · ${total} pontos</p>
+  abrirModal(`<div class="capa"><span class="selo">NSP · SEGURANÇA DO PACIENTE</span>
+    <h1>Acolher com Segurança</h1>
+    <p class="sub">Comportamento agitado ou ameaçador no AME</p></div>
+    <p>Situações de sala de espera. Você observa, decide o que fazer, quem da equipe faz e o que dizer. Sem cronômetro: cada ação leva um tempo da cena, e a tensão muda conforme o ambiente.</p>
+    <h3>Casos</h3>
+    <p class="sub">${feitos} de ${CASOS.length} feitos · ${total} pontos</p>
     <ol class="casos">${CASOS.map((c, i) => {
       const p = J.progresso[c.id];
       return `<li><button data-c="${c.id}"><span class="n">${i + 1}</span><div><b>${esc(c.titulo)}</b><small>${esc(c.local)}</small></div>
         <span class="est">${p ? '★'.repeat(p.estrelas) + '☆'.repeat(3 - p.estrelas) + `<small>${p.pontos} pts</small>` : '<small>novo</small>'}</span></button></li>`;
     }).join('')}</ol>
     <div class="acoes"><button class="btn" data-a="fontes">Base do jogo</button></div>`);
-  $('#trocar').onclick = e => { e.preventDefault(); telaFuncao(); };
   document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => iniciarCaso(b.dataset.c));
   $('[data-a="fontes"]').onclick = telaFontes;
   bandejaVazia();
@@ -143,7 +138,7 @@ function faseAgir() {
   J.fase = 'agir';
   limparSobre();
   $('#hud-tempo').hidden = false;
-  J.aba = 'acoes';
+  J.aba = 'acoes'; J.retorno = null; J.detalhe = null;
   renderBandeja();
   toast(`${J.caso.pessoa.nome} está agitado. Toque numa ação e escolha quem faz.`);
 }
@@ -165,8 +160,9 @@ function renderBandeja() {
     <button data-aba="conversa" class="${J.aba === 'conversa' ? 'ativa' : ''}">Conversa${libera && !fim ? ' <i class="ponto"></i>' : ''}</button></div>`;
   let corpo = '';
   if (J.aba === 'acoes') {
+    const ret = J.retorno ? `<div class="retorno ${J.retorno.tipo}">${J.retorno.html}</div>` : '';
     if (J.detalhe) corpo = detalheAcao(J.detalhe);
-    else corpo = `<div class="cartas">${caso.acoes.map(id => {
+    else corpo = ret + `<div class="cartas">${caso.acoes.map(id => {
       const a = ACOES[id], f = R.feitos.find(x => x.id === id), oc = R.ocupado.has(id);
       return `<button class="carta ${f ? (a.tipo === 'armadilha' ? 'feita ruim' : 'feita') : ''} ${oc ? 'ocupada' : ''}" data-id="${id}" ${f || oc ? 'disabled' : ''}>
         <span class="ic">${a.icone}</span><b>${esc(a.nome)}</b>${f ? `<small>${PAPEIS[f.papel].icone} ${esc(PAPEIS[f.papel].nome)}</small>` : oc ? '<small>a caminho…</small>' : ''}</button>`;
@@ -187,7 +183,7 @@ function detalheAcao(id) {
     <p class="quem">Quem faz?</p>
     <div class="grade-quem">${PAPEIS_CENA.map(k => {
       const p = PAPEIS[k], aqui = presente(k);
-      return `<button data-p="${k}" class="${aqui ? '' : 'ausente'} ${k === J.funcao ? 'eu' : ''}"><span>${p.icone}</span><b>${esc(p.nome)}</b><small>${aqui ? (k === J.funcao ? 'você' : 'na sala') : '📣 acionar'}</small></button>`;
+      return `<button data-p="${k}" class="${aqui ? '' : 'ausente'}"><span>${p.icone}</span><b>${esc(p.nome)}</b><small>${aqui ? 'na sala' : '📣 acionar · +30 s'}</small></button>`;
     }).join('')}</div></div>`;
 }
 function ligarDetalhe() {
@@ -211,9 +207,10 @@ async function executar(id, papel) {
   const R = J.R, caso = J.caso, a = ACOES[id];
   if (R.ocupado.has(id) || feito(id)) return;
   R.ocupado.add(id);
+  let chegada = 0;
   if (!presente(papel)) {
-    R.presentes.add(papel); R.chamadas.push(papel);
-    toast(`📣 ${PAPEIS[papel].nome} acionada. Chega em instantes.`);
+    R.presentes.add(papel); R.chamadas.push(papel); chegada = CHEGADA;
+    toast(`📣 ${PAPEIS[papel].nome} acionada.`);
     await CENA.entrar(C, papel);
   }
   // reservado so funciona se a tensao ja baixou um pouco
@@ -229,17 +226,39 @@ async function executar(id, papel) {
   const certo = papelCerto(id, papel);
   R.feitos.push({ id, papel, t: R.t, certo });
   if (a.fala) balao(C.equipe[papel], a.fala);
+  const antes = R.tensao;
   aplicar(id, papel);
+  const quem = `${PAPEIS[papel].icone} ${esc(PAPEIS[papel].nome)}`;
   if (a.tipo === 'armadilha') {
     R.armadilhas.push(id);
     flash();
-    toast(`✗ ${esc(a.nome)}: ${esc(a.erro)}`, 'ruim', 6500);
+    J.retorno = { tipo: 'ruim', html: `<b>✗ ${esc(a.nome)}</b> <small>${quem}</small><p>${esc(a.erro)}</p>` };
   } else if (!certo) {
     const dica = id === 'interlocutor' && caso.interlocutorErrado?.[papel] ? caso.interlocutorErrado[papel]
       : `Pelo POP, isso cabe a: ${(id === 'interlocutor' ? caso.interlocutor : a.papeis).map(p => PAPEIS[p].nome).join(' ou ')}.`;
-    toast(`⚠️ ${esc(a.nome)} feito, mas fora do papel. ${esc(dica)}`, 'aviso', 6000);
-  } else toast(`✓ ${esc(a.ok)}`, 'ok', 4200);
+    J.retorno = { tipo: 'aviso', html: `<b>⚠️ ${esc(a.nome)}: feito, mas fora do papel</b> <small>${quem}</small><p>${esc(dica)}</p>` };
+  } else J.retorno = { tipo: 'ok', html: `<b>✓ ${esc(a.nome)}</b> <small>${quem}</small><p>${esc(a.ok)}</p>` };
+  const seg = (DURACAO[a.tipo] || 30) + chegada;
+  avancar(seg);
+  const dif = Math.round(R.tensao - antes);
+  J.retorno.html += `<small class="efeito">+${seg} s de cena · tensão ${dif > 0 ? '+' + dif : dif}</small>`;
+  const F = R.flags;
+  if (dif >= 10 && (F.ruido || F.luz || F.bip || F.publico) && a.tipo !== 'armadilha')
+    J.retorno.html += `<small class="efeito">Enquanto isso o ambiente seguiu barulhento e cheio. Pelo POP, as condutas imediatas (reduzir estímulos, afastar o público, interlocutor único) vêm primeiro.</small>`;
   renderBandeja(); atualizarHud();
+}
+
+// passa o tempo da cena: a tensao anda um passo a cada 8 s simulados
+function avancar(seg) {
+  const R = J.R;
+  for (let s = 0; s < Math.round(seg / SEG_POR_PASSO); s++) {
+    const tinha = R.crise;
+    passoTensao();
+    R.t += SEG_POR_PASSO;
+    if (!tinha && R.crise) break;
+  }
+  atualizarHud();
+  if (R.t >= TEMPO_LIMITE && !R.fim && J.fase === 'agir') { R.fim = true; toast('⏱ Dez minutos de cena. Hora de encaminhar e registrar.', 'aviso', 6000); faseFechar(); }
 }
 
 // movimento da equipe na cena antes do efeito
@@ -371,6 +390,7 @@ function ligarConversa() {
     const o = D.opcoes[+b.dataset.o], T = J.caso.dialogo[D.turno];
     D.escolhas.push(o.v); D.ultimo = o; D.turno++; D.opcoes = null;
     R.tensao = clamp(R.tensao + o.d, 0, 100);
+    avancar(FALA);
     CENA.tensaoVisual(C, R.tensao);
     const falante = C.equipe[R.flags.interlocutor];
     balao(falante, o.t.replace('{quem}', PAPEIS[R.flags.interlocutor].quem).slice(0, 90) + (o.t.length > 90 ? '…' : ''));
@@ -476,7 +496,7 @@ function avaliar() {
   if (R.posEvento) prot += 4;
   if (!faltou.length && !sobrou.length) prot += 4;
 
-  const agil = R.estavel != null ? clamp(100 - Math.max(0, R.estavel - 45) * 0.8, 20, 100) : 15;
+  const agil = R.estavel != null ? clamp(100 - Math.max(0, R.estavel - 200) * 0.25, 20, 100) : 15;
   const n = { sinais: clamp(sinais, 0, 100), seg: clamp(seg, 0, 100), acolhe: clamp(acolhe, 0, 100), prot: clamp(prot, 0, 100), agil: clamp(agil, 0, 100) };
   const pontos = Math.round((n.sinais * 0.15 + n.seg * 0.3 + n.acolhe * 0.25 + n.prot * 0.2 + n.agil * 0.1) * 10);
   const estrelas = pontos >= 800 ? 3 : pontos >= 600 ? 2 : pontos >= 400 ? 1 : 0;
@@ -503,7 +523,12 @@ function resultado() {
   const barra = (k, v) => `<li><span>${k}</span><i style="width:${v}%" class="${v >= 75 ? 'boa' : v >= 50 ? 'media' : 'ruim'}"></i><b>${Math.round(v)}</b></li>`;
   const encTxt = R.enc.map(e => ENCAMINHAMENTOS[e].nome).join(', ') || '—';
   const proxima = CASOS[CASOS.findIndex(c => c.id === caso.id) + 1];
-  const f = PAPEIS[J.funcao];
+  const papeisCaso = new Set();
+  for (const k of Object.keys(caso.essenciais)) {
+    if (k === 'chamar_enfermagem') { papeisCaso.add('recepcao'); papeisCaso.add('enfermagem'); }
+    else if (k === 'interlocutor') papeisCaso.add(caso.interlocutor[0]);
+    else for (const p of ACOES[k]?.papeis || []) papeisCaso.add(p);
+  }
   abrirModal(`<div class="capa"><div class="estrelas">${'★'.repeat(A.estrelas)}${'☆'.repeat(3 - A.estrelas)}</div>
     <h2>${esc(caso.titulo)}</h2><p class="pontos">${A.pontos} pontos${ant && ant.pontos >= A.pontos ? ` <small>(recorde ${ant.pontos})</small>` : ''}</p></div>
     <ul class="notas">${barra('Sinais', A.n.sinais)}${barra('Segurança', A.n.seg)}${barra('Acolhimento', A.n.acolhe)}${barra('Protocolo', A.n.prot)}${barra('Agilidade', A.n.agil)}</ul>
@@ -515,7 +540,8 @@ function resultado() {
     ${A.regErrados.length ? `<p class="sub">No registro: ${A.regErrados.map(id => esc(REGISTRO.find(r => r.id === id).porque)).join(' ')}</p>` : ''}
     <h3>Para levar</h3>
     <ul class="aprendi">${caso.aprendizado.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-    ${f ? `<div class="nota"><b>${f.icone} Na sua função (${esc(f.nome)}):</b> ${esc(f.pop)}.</div>` : ''}
+    <h3>Quem faz o quê neste caso (POP)</h3>
+    <ul class="resp-pop">${[...papeisCaso].map(k => `<li><b>${PAPEIS[k].icone} ${esc(PAPEIS[k].nome)}</b> ${esc(PAPEIS[k].pop)}</li>`).join('')}</ul>
     <div class="acoes"><button class="btn" data-a="mapa">Casos</button><button class="btn" data-a="repetir">Jogar de novo</button>${proxima ? '<button class="btn primario" data-a="prox">Próximo caso</button>' : ''}</div>`);
   $('[data-a="mapa"]').onclick = telaMapa;
   $('[data-a="repetir"]').onclick = () => iniciarCaso(caso.id);
@@ -532,7 +558,7 @@ function atualizarHud() {
   b.style.background = `hsl(${(1 - v / 100) * 120}, 70%, 45%)`;
   const s = Math.floor(R.t), m = Math.floor(s / 60);
   $('#hud-tempo b').textContent = `${m}:${String(s % 60).padStart(2, '0')}`;
-  $('#hud-tempo').classList.toggle('alerta', s > TEMPO_MAX - 30);
+  $('#hud-tempo').classList.toggle('alerta', s > TEMPO_LIMITE - 120);
 }
 function bandejaVazia(txt) {
   $('#bandeja').innerHTML = `<div class="vazio">${esc(txt || 'Escolha um caso para começar.')}</div>`;
@@ -591,7 +617,7 @@ function ajuda() {
   abrirModal(`<h2>Como jogar</h2>
     <ol class="passos">
       <li><b>Observe.</b> Classifique cada sinal: <span class="tag risco">Risco</span> aciona o protocolo, <span class="tag pista">Pista</span> explica a causa, <span class="tag esperado">Esperado</span> não é risco.</li>
-      <li><b>Aja.</b> A tensão sobe com barulho, luz forte, público perto e respostas erradas. Toque numa ação e escolha <b>quem faz</b>, conforme as responsabilidades do POP. Quem não está na sala é acionado e chega em instantes.</li>
+      <li><b>Aja.</b> Não há cronômetro. Cada ação leva um tempo da cena (30 s a 1 min; quem precisa ser acionado leva mais 30 s), e nesse tempo a tensão sobe com barulho, luz forte e público perto, ou desce com os ajustes certos. Toque numa ação e escolha <b>quem faz</b>, conforme as responsabilidades do POP.</li>
       <li><b>Converse.</b> Depois de eleger um interlocutor único, escolha o que dizer na aba Conversa.</li>
       <li><b>Encaminhe e registre.</b> SAMU, PS, CAPS, Conselho Tutelar ou seguir no AME; registro no prontuário e notificação ao NSP.</li>
     </ol>
@@ -603,16 +629,8 @@ function ajuda() {
 // ================================================================================================ laco
 let anterior = performance.now(), relogio = 0;
 function laco(agora) {
-  const dt = Math.min(0.05, (agora - anterior) / 1000); anterior = agora; relogio += dt;
-  const R = J.R;
-  // o relogio para enquanto a pessoa le e escolhe uma fala na conversa
-  const lendo = J.aba === 'conversa' && R && dialogoLiberado() && R.dialogo.turno < J.caso.dialogo.length;
-  if (R && J.fase === 'agir' && !J.pausa && $('#modal').classList.contains('oculto') && !lendo) {
-    R.t += dt; R.acc += dt;
-    while (R.acc >= 1) { R.acc -= 1; passoTensao(); }
-    atualizarHud();
-    if (R.t >= TEMPO_MAX && !R.fim) { R.fim = true; toast('⏱ Tempo esgotado. Hora de encaminhar e registrar.', 'aviso'); faseFechar(); }
-  }
+  // dt limitado a 0,25 s: em aparelho lento (ou aba em segundo plano) a equipe anda aos saltos, mas chega
+  const dt = Math.min(0.25, (agora - anterior) / 1000); anterior = agora; relogio += dt;
   CENA.quadro(C, dt, relogio);
   posicionarSobre();
   requestAnimationFrame(laco);
@@ -625,4 +643,4 @@ C.redimensionar();
 CENA.montarCaso(C, CASOS[0]);
 CENA.tensaoVisual(C, CASOS[0].tensao);
 requestAnimationFrame(laco);
-if (J.funcao) telaMapa(); else telaFuncao();
+telaMapa();
