@@ -18,17 +18,20 @@ Three.js 0.160 vem do jsDelivr. O progresso fica no navegador (localStorage); n�
 
 ## Como funciona cada caso
 
-1. **Observar** – classificar o que se vê na cena: *risco* (aciona o protocolo), *pista* (explica a causa)
-   ou *esperado* (não é risco, ex.: estereotipia).
+1. **Observar** – classificar o que se vê na cena: *sinal de risco* (pede ação pelo POP), *explica a causa*
+   ou *não é risco* (ex.: estereotipia).
 2. **Agir** – sem cronômetro. Cada ação leva um tempo da cena (30 s a 45 s; mais 30 s quando alguém
    precisa ser acionado) e só nesse tempo a tensão muda: sobe com barulho, luz forte e público perto,
    desce com os ajustes certos. Por isso a ordem importa, mas não há pressa para ler. Cada ação pede
    **quem faz**, conforme a seção Responsáveis do POP, e o retorno fica no painel até a próxima ação.
+   No alto da cena aparecem os fatores que estão subindo ↑ ou descendo ↓ a tensão naquele momento.
    Algumas ações são armadilhas (contenção física, sedação, falar alto, cercar, tocar sem avisar…).
 3. **Conversar** – depois de eleger um interlocutor único, três falas com escolhas.
 4. **Encaminhar e registrar** – SAMU 192, PS, CAPS, Conselho Tutelar, PM 190 ou seguir no AME;
    registro no prontuário; notificação ao NSP; reunião pós-evento.
-5. **Resultado** – notas (sinais, segurança, acolhimento, protocolo, agilidade em tempo de cena), o
+   Na primeira vez, dicas curtas aparecem na hora certa (podem ser reativadas na ajuda). Termos
+   técnicos (NSP, CAPS, estereotipia, interlocutor único...) têm explicação ao toque.
+5. **Resultado** – **o que faltou** (com quem deveria fazer, pelo POP), notas (sinais, segurança, acolhimento, protocolo, agilidade em tempo de cena), o
    **check list do Anexo 1** do POP e o que cabe a cada função envolvida no caso.
 
 ## Casos
