@@ -222,8 +222,44 @@ h1, h2, h3 { font-family: 'Nunito', 'Inter', sans-serif; line-height: 1.15; }
 .fontes { padding-left: 18px; line-height: 1.6; font-size: 14px; }
 .fontes a { color: var(--azul); }
 
+/* ------------------------------------------------------------------ demonstracao narrada */
+#narrador { position: fixed; z-index: 30; left: 8px; right: 8px; top: 8px; max-height: 40vh; overflow-y: auto; padding: 12px 14px 14px; border-radius: 16px; background: rgba(24, 33, 42, .95); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: entra .3s ease; }
+#narrador[hidden] { display: none; }
+#narrador.pausado { outline: 2px solid var(--amarelo); }
+.nar-topo { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--amarelo); }
+.nar-passo { color: #8d9aa8; }
+.nar-tit { font-size: 19px; margin: 3px 0 5px; color: #fff; }
+.nar-txt { font-size: 14px; line-height: 1.5; color: #e3e8ee; }
+.nar-txt b { color: #fff; }
+.nar-txt p { margin: 6px 0 0; }
+.nar-txt .nar-sub { color: #b8c4cf; font-size: 13px; }
+.nar-txt .termo { text-decoration-color: #8fc7ea; }
+.nar-ref { display: inline-block; margin-top: 7px; padding: 2px 9px; border-radius: 999px; background: rgba(244, 196, 48, .16); color: var(--amarelo); font-size: 11.5px; font-weight: 700; }
+.nar-ref[hidden] { display: none; }
+.nar-lista { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 5px; font-size: 13px; }
+.nar-lista li { display: flex; gap: 7px; align-items: baseline; color: #d2dae2; line-height: 1.4; }
+.nar-lista li i { font-style: normal; width: 14px; flex: none; text-align: center; font-weight: 800; }
+.nar-lista li.ok i { color: #4cd38a; } .nar-lista li.pend i { color: #ff8a8a; }
+.nar-ctrl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.nar-ctrl button { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: #fff; border-radius: 9px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; }
+.nar-ctrl [data-n="sair"] { margin-left: auto; }
+.nar-vel { display: flex; gap: 2px; padding: 2px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.nar-vel button { border: 0; padding: 4px 9px; }
+.nar-vel button.ativa { background: var(--amarelo); color: #2b2100; }
+.nar-barra { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--amarelo); transition: width .1s linear; }
+/* o "dedo" da demonstracao */
+.toque { outline: 3px solid var(--amarelo) !important; outline-offset: 2px; box-shadow: 0 0 0 7px rgba(244,196,48,.35) !important; transition: box-shadow .2s; }
+body.modo-demo #bandeja, body.modo-demo #modal-conteudo, body.modo-demo #b-mapa { pointer-events: none; }
+body.modo-demo #toasts { top: 10px; bottom: auto; }
+body.modo-demo .modal-caixa { max-height: 55vh; }
+@media (max-width: 959px) { body.modo-demo #fatores { display: none; } }
+
 /* ------------------------------------------------------------------ telas largas */
 @media (min-width: 960px) {
+  #narrador { top: auto; bottom: 12px; right: auto; left: 12px; width: min(540px, calc(100vw - 420px - 24px)); max-height: 48vh; }
+  body.modo-demo #toasts { top: 56px; }
+  body.modo-demo .modal { place-items: start center; padding-top: 14px; }
+  body.modo-demo .modal-caixa { max-height: 62vh; }
   #app { grid-template-columns: minmax(0, 1fr) 420px; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "hud hud" "palco bandeja"; }
   #bandeja { max-height: none; border-top: 0; border-left: 1px solid var(--borda); padding: 14px 16px; }
   .cartas { grid-template-columns: repeat(3, 1fr); }

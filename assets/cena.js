@@ -1,4 +1,4 @@
-// Cena 3D: sala de espera do AME em maquete (paredes do fundo e da esquerda; frente aberta).
+// Cena 3D: sala de espera do ambulatorio em maquete (paredes do fundo e da esquerda; frente aberta).
 // Os personagens sao bonecos simples com articulacoes para andar, gesticular e sentar.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -258,7 +258,7 @@ export function criarCena(canvas) {
   }
   const bebedouro = caixa(0.4, 1.1, 0.4, 0xe8edf0, 0.05); bebedouro.position.set(2.9, 0.55, -4.7); scene.add(bebedouro);
   const galao = cilindro(0.16, 0.16, 0.4, 0x8fc7ea); galao.position.set(2.9, 1.3, -4.7); scene.add(galao);
-  const logo = rotulo('AME', '#2a6f97', 'rgba(255,255,255,.0)', 1.6); logo.position.set(2.2, 2.6, -4.9); scene.add(logo);
+  const logo = rotulo('AMBULATÓRIO', '#2a6f97', 'rgba(255,255,255,.0)', 2.3); logo.position.set(2.9, 2.62, -4.9); scene.add(logo);
   // rota de saida (setas no chao, aparecem quando liberada)
   const rota = new THREE.Group();
   for (let n = 0; n < 4; n++) {

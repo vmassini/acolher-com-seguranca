@@ -1,9 +1,9 @@
 // Conteudo do jogo: funcoes da equipe, acoes possiveis e os casos.
-// Base: POP NSP "Identificacao e manejo de pessoas com comportamento agitado ou ameacador no AME
+// Base: POP NSP "Identificacao e manejo de pessoas com comportamento agitado ou ameacador no ambulatorio
 // Rio Claro" (18/02/2026). O que o POP nao detalha veio das fontes listadas em FONTES.
 
 export const FONTES = [
-  { nome: 'POP NSP – Comportamento agitado ou ameaçador no AME Rio Claro (18/02/2026)' },
+  { nome: 'POP NSP – Comportamento agitado ou ameaçador no ambulatório (18/02/2026)' },
   { nome: 'Richmond et al. – Verbal De-escalation of the Agitated Patient (Projeto BETA, 2012)', url: 'https://westjem.com/?p=1160' },
   { nome: 'Baldaçara et al. – Diretrizes brasileiras para manejo da agitação psicomotora, parte 1 (ABP, 2019)', url: 'https://www.scielo.br/j/rbp/a/xTthMJxBtn7yYK9h5t8wPbn' },
   { nome: 'Lei 13.819/2019 – Política Nacional de Prevenção da Automutilação e do Suicídio', url: 'https://www2.camara.leg.br/legin/fed/lei/2019/lei-13819-26-abril-2019-788025-normaatualizada-pl.pdf' },
@@ -80,16 +80,16 @@ export const ACOES = {
     ok: 'Comunicação adaptada do POP para deficiência auditiva: falar de frente e usar escrita.', efeito: -10, fala: '(escreve no papel) Vamos conversar por aqui?' },
   guiar: { nome: 'Identificar-se e explicar o ambiente', icone: '🦯', tipo: 'comunicacao', papeis: null,
     desc: 'Dizer quem é, onde está e o que mudou ao redor.',
-    ok: 'Comunicação adaptada do POP para deficiência visual: identificar-se e explicar o ambiente.', efeito: -10, fala: 'Aqui é da equipe do AME, estou na sua frente.' },
+    ok: 'Comunicação adaptada do POP para deficiência visual: identificar-se e explicar o ambiente.', efeito: -10, fala: 'Aqui é da equipe do ambulatório, estou na sua frente.' },
   frasesCurtas: { nome: 'Frases curtas, uma por vez', icone: '🧩', tipo: 'comunicacao', papeis: null,
     desc: 'Uma instrução de cada vez, palavras simples, sem pressa.',
     ok: 'Comunicação adaptada do POP para TEA e deficiência intelectual.', efeito: -8, fala: 'Lucas. Sala quieta.' },
 
   // armadilhas: parecem resolver, mas o POP ou as diretrizes dizem o contrario
   contencao: { nome: 'Segurar para conter', icone: '✊', tipo: 'armadilha', papeis: null, desc: 'Segurar os braços até a pessoa se acalmar.',
-    erro: 'O AME não realiza contenção física para agitação. Segurar aumenta a agitação e o risco de lesão para todos.', efeito: 25, seg: 30, acolhe: 15, fala: 'Segura ele!' },
+    erro: 'O ambulatório não realiza contenção física para agitação. Segurar aumenta a agitação e o risco de lesão para todos.', efeito: 25, seg: 30, acolhe: 15, fala: 'Segura ele!' },
   sedacao: { nome: 'Pedir medicação para acalmar', icone: '💊', tipo: 'armadilha', papeis: null, desc: 'Pedir uma injeção para ela ficar mais calma.',
-    erro: 'O AME não realiza sedação para agitação. Se houver risco de dano, o caminho é o SAMU 192.', efeito: 5, seg: 15, acolhe: 5, fala: 'Dá alguma coisa pra ele dormir?' },
+    erro: 'O ambulatório não realiza sedação para agitação. Se houver risco de dano, o caminho é o SAMU 192.', efeito: 5, seg: 15, acolhe: 5, fala: 'Dá alguma coisa pra ele dormir?' },
   falarAlto: { nome: 'Falar mais alto e firme', icone: '📢', tipo: 'armadilha', papeis: null, desc: 'Aumentar o tom para ser ouvido.',
     erro: 'O POP pede comunicação calma, simples e objetiva. Voz alta soa como confronto.', efeito: 15, seg: 5, acolhe: 10, fala: 'O SENHOR VAI TER QUE ESPERAR!' },
   cercar: { nome: 'Chamar colegas para cercar', icone: '👥', tipo: 'armadilha', papeis: null, desc: 'Juntar vários funcionários em volta dela.',
@@ -109,7 +109,7 @@ export const ACOES = {
 };
 
 export const ENCAMINHAMENTOS = {
-  ame: { nome: 'Seguir o atendimento no AME', icone: '🏥' },
+  ame: { nome: 'Seguir o atendimento no ambulatório', icone: '🏥' },
   samu: { nome: 'SAMU 192', icone: '🚑' },
   ps: { nome: 'Pronto-socorro de referência', icone: '🏨' },
   caps: { nome: 'CAPS Rio Claro', icone: '🧩' },
@@ -303,7 +303,7 @@ export const CASOS = [
     aprendizado: [
       'Controladores afastam o público, protegem o ambiente e mantêm a rota de saída.',
       'Quem está no conflito não deve ser o interlocutor.',
-      'O AME não faz contenção física.',
+      'O ambulatório não faz contenção física.',
       'Limites claros e respeitosos, depois de ouvir.',
     ],
   },
@@ -328,7 +328,7 @@ export const CASOS = [
     interlocutor: ['enfermagem'],
     dialogo: [
       { fala: 'Quem é você? Sai de perto de mim!', opcoes: [
-        { t: 'Seu Jorge, sou {quem}. O senhor está no AME, esperando o exame. Vou ficar aqui do lado.', v: 'bom', d: -12, exp: 'Orienta: quem fala, onde ele está e o que vai acontecer (Projeto BETA, domínio 3).' },
+        { t: 'Seu Jorge, sou {quem}. O senhor está no ambulatório, esperando o exame. Vou ficar aqui do lado.', v: 'bom', d: -12, exp: 'Orienta: quem fala, onde ele está e o que vai acontecer (Projeto BETA, domínio 3).' },
         { t: 'Seu Jorge, o senhor está me ouvindo? Responde direito, que eu preciso saber o que está acontecendo.', v: 'ruim', d: 8, exp: 'Cobrança a quem está confuso aumenta a agitação.' },
         { t: 'Gente, ele deve estar surtando. Melhor manter distância até passar.', v: 'ruim', d: 12, exp: 'Rotulação. O POP pede não presumir crise psiquiátrica.' },
       ] },

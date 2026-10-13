@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1f2f3a">
-  <title>Acolher com Segurança · AME</title>
+  <title>Acolher com Segurança · Ambulatório</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
   <div id="app">
     <header id="hud">
       <button class="hud-btn" id="b-mapa" aria-label="Casos">☰</button>
-      <div class="hud-caso"><b id="hud-titulo">Acolher com Segurança</b><small id="hud-local">AME · manejo de comportamento agitado</small></div>
+      <div class="hud-caso"><b id="hud-titulo">Acolher com Segurança</b><small id="hud-local">Ambulatório · manejo de comportamento agitado</small></div>
       <div class="hud-tensao" id="hud-tensao" hidden>
         <span id="hud-tensao-nome">Tensão</span>
         <div class="barra"><i id="hud-tensao-barra"></i></div>
@@ -39,6 +39,19 @@
       <div id="toasts" aria-live="polite"></div>
     </main>
     <section id="bandeja"></section>
+  </div>
+  <div id="narrador" hidden aria-live="polite">
+    <div class="nar-topo"><span class="nar-fase"></span><span class="nar-passo"></span></div>
+    <h3 class="nar-tit"></h3>
+    <div class="nar-txt"></div>
+    <div class="nar-ref"></div>
+    <div class="nar-ctrl">
+      <button data-n="pausa">⏸ Pausar</button>
+      <button data-n="prox" title="Pula a espera de leitura">⏭ Avançar</button>
+      <span class="nar-vel" title="Velocidade"><button data-vel="1">1×</button><button data-vel="2">2×</button><button data-vel="4">4×</button></span>
+      <button data-n="sair">Sair</button>
+    </div>
+    <i class="nar-barra"></i>
   </div>
   <div id="glossa" hidden></div>
   <div id="modal" class="modal oculto" role="dialog" aria-modal="true"><div class="modal-caixa" id="modal-conteudo"></div></div>

@@ -1,7 +1,7 @@
 # Acolher com Segurança
 
 Jogo de treinamento do POP do NSP **"Identificação e manejo de pessoas com comportamento agitado ou
-ameaçador no AME Rio Claro"** (18/02/2026). Para todas as funções do AME: recepção, controle de acesso,
+ameaçador no ambulatório"** (18/02/2026). Para todas as funções do ambulatório: recepção, controle de acesso,
 enfermagem, médicos, psicologia, serviço social, gestão e NSP. Funciona no celular e no computador.
 
 **Demo:** https://vmassini.github.io/acolher-com-seguranca/
@@ -27,12 +27,29 @@ Three.js 0.160 vem do jsDelivr. O progresso fica no navegador (localStorage); n�
    No alto da cena aparecem os fatores que estão subindo ↑ ou descendo ↓ a tensão naquele momento.
    Algumas ações são armadilhas (contenção física, sedação, falar alto, cercar, tocar sem avisar…).
 3. **Conversar** – depois de eleger um interlocutor único, três falas com escolhas.
-4. **Encaminhar e registrar** – SAMU 192, PS, CAPS, Conselho Tutelar, PM 190 ou seguir no AME;
+4. **Encaminhar e registrar** – SAMU 192, PS, CAPS, Conselho Tutelar, PM 190 ou seguir no ambulatório;
    registro no prontuário; notificação ao NSP; reunião pós-evento.
    Na primeira vez, dicas curtas aparecem na hora certa (podem ser reativadas na ajuda). Termos
    técnicos (NSP, CAPS, estereotipia, interlocutor único...) têm explicação ao toque.
 5. **Resultado** – **o que faltou** (com quem deveria fazer, pelo POP), notas (sinais, segurança, acolhimento, protocolo, agilidade em tempo de cena), o
    **check list do Anexo 1** do POP e o que cabe a cada função envolvida no caso.
+
+## Demonstração
+
+Cada caso tem uma demonstração narrada que joga sozinha pelo procedimento do POP: classifica os sinais,
+faz as ações na ordem certa (com um destaque amarelo em cada clique), conversa, encaminha e registra.
+Dá para pausar, avançar e mudar a velocidade (1×, 2×, 4×). Botões "▶ Assistir uma demonstração" na
+tela inicial e "▶ Ver demonstração" na abertura de cada caso, ou direto pelo endereço:
+`?demo=espera` (ids: espera, sensorial, surda, acompanhante, clinica, suicidio, cego) e `&vel=2`.
+
+Para gravar um vídeo da demonstração (Chrome headless + ffmpeg):
+
+```bash
+node ferramentas/gravar-demo.mjs gravar http://localhost:8140 espera midia/quadros 8 1
+```
+
+e depois juntar os quadros com o ffmpeg. `validar` no lugar de `gravar` roda as demonstrações em 4× e
+mostra a pontuação de cada caso.
 
 ## Casos
 
@@ -59,7 +76,7 @@ O POP não detalha as falas nem algumas decisões. Foram completadas com as font
 
 ## Fontes
 
-- POP NSP – AME Rio Claro (18/02/2026)
+- POP NSP – comportamento agitado ou ameaçador no ambulatório (18/02/2026)
 - [Richmond et al. – Verbal De-escalation of the Agitated Patient (Projeto BETA, 2012)](https://westjem.com/?p=1160)
 - [Baldaçara et al. – Diretrizes brasileiras para o manejo da agitação psicomotora, parte 1 (2019)](https://www.scielo.br/j/rbp/a/xTthMJxBtn7yYK9h5t8wPbn)
 - [Lei 13.819/2019](https://www2.camara.leg.br/legin/fed/lei/2019/lei-13819-26-abril-2019-788025-normaatualizada-pl.pdf)

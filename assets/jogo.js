@@ -28,7 +28,7 @@ const SEM_ADAPTADA = { escrita: '🗨️ Não entende o que a equipe fala', guia
 const TIPOS = { risco: 'Sinal de risco', pista: 'Explica a causa', esperado: 'Não é risco' };
 const GLOSSARIO = {
   'interlocutor único': 'Uma só pessoa da equipe conversa com quem está agitado. As outras se afastam e não interrompem.',
-  'contenção física': 'Imobilizar a pessoa com as mãos ou com faixas. O AME não faz.',
+  'contenção física': 'Imobilizar a pessoa com as mãos ou com faixas. O ambulatório não faz.',
   'ajuste razoável': 'Adaptação do atendimento à necessidade da pessoa com deficiência, prevista na Lei Brasileira de Inclusão.',
   'ideação suicida': 'Pensamentos ou falas sobre tirar a própria vida.',
   'glicemia capilar': 'Exame na ponta do dedo que mede o açúcar no sangue.',
@@ -39,7 +39,7 @@ const GLOSSARIO = {
   'descalonamento': 'Técnicas de conversa para reduzir a agitação sem confronto.',
   'hipoglicemia': 'Açúcar baixo no sangue. Causa suor, tremor, confusão e pode causar agitação.',
   'autolesão': 'Machucar o próprio corpo, por exemplo com cortes.',
-  'sedação': 'Dar remédio para acalmar ou fazer dormir. O AME não faz para agitação.',
+  'sedação': 'Dar remédio para acalmar ou fazer dormir. O ambulatório não faz para agitação.',
   'Libras': 'Língua Brasileira de Sinais.',
   'NSP': 'Núcleo de Segurança do Paciente: recebe as notificações de incidentes, analisa e propõe melhorias.',
   'CAPS': 'Centro de Atenção Psicossocial: serviço da rede de saúde mental do município.',
@@ -74,13 +74,13 @@ const TEXTO_MEDICO = {
 function telaMapa() {
   J.fase = 'mapa'; J.caso = null; J.R = null;
   $('#hud-tensao').hidden = true; $('#hud-tempo').hidden = true;
-  $('#hud-titulo').textContent = 'Acolher com Segurança'; $('#hud-local').textContent = 'AME · manejo de comportamento agitado';
+  $('#hud-titulo').textContent = 'Acolher com Segurança'; $('#hud-local').textContent = 'Ambulatório · manejo de comportamento agitado';
   limparSobre();
   const total = Object.values(J.progresso).reduce((a, p) => a + (p.pontos || 0), 0);
   const feitos = Object.keys(J.progresso).length;
   abrirModal(`<div class="capa"><span class="selo">NÚCLEO DE SEGURANÇA DO PACIENTE (NSP)</span>
     <h1>Acolher com Segurança</h1>
-    <p class="sub">Comportamento agitado ou ameaçador no AME</p></div>
+    <p class="sub">Comportamento agitado ou ameaçador no ambulatório</p></div>
     <p>Situações de sala de espera. Você observa, decide o que fazer, quem da equipe faz e o que dizer. Sem cronômetro: cada ação leva um tempo da cena, e a tensão muda conforme o ambiente.</p>
     <h3>Casos</h3>
     <p class="sub">${feitos} de ${CASOS.length} feitos · ${total} pontos</p>
@@ -89,8 +89,9 @@ function telaMapa() {
       return `<li><button data-c="${c.id}"><span class="n">${i + 1}</span><div><b>${esc(c.titulo)}</b><small>${esc(c.local)}</small></div>
         <span class="est">${p ? '★'.repeat(p.estrelas) + '☆'.repeat(3 - p.estrelas) + `<small>${p.pontos} pts</small>` : '<small>novo</small>'}</span></button></li>`;
     }).join('')}</ol>
-    <div class="acoes"><button class="btn" data-a="fontes">Base do jogo</button></div>`);
+    <div class="acoes"><button class="btn" data-a="fontes">Base do jogo</button><button class="btn" data-a="demo">▶ Assistir uma demonstração</button></div>`);
   esconderDica();
+  $('[data-a="demo"]').onclick = () => rodarDemo(CASOS[0].id);
   document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => iniciarCaso(b.dataset.c));
   $('[data-a="fontes"]').onclick = telaFontes;
   bandejaVazia();
@@ -124,8 +125,9 @@ function iniciarCaso(id) {
   J.fase = 'intro';
   abrirModal(`<span class="selo">${esc(caso.local)}</span><h2>${esc(caso.titulo)}</h2><p>${et(caso.resumo)}</p>
     <div class="nota">Primeiro, <b>observe</b>. Classifique o que você vê antes de agir.</div>
-    <div class="acoes"><button class="btn" data-a="mapa">Voltar</button><button class="btn primario" data-a="ir">Observar a cena</button></div>`);
+    <div class="acoes"><button class="btn" data-a="mapa">Voltar</button>${DEMO.ativo ? '' : '<button class="btn" data-a="demo">▶ Ver demonstração</button>'}<button class="btn primario" data-a="ir">Observar a cena</button></div>`);
   $('[data-a="mapa"]').onclick = telaMapa;
+  const bd = $('[data-a="demo"]'); if (bd) bd.onclick = () => rodarDemo(caso.id);
   $('[data-a="ir"]').onclick = () => { fecharModal(); faseObservar(); };
 }
 
@@ -541,6 +543,9 @@ function avaliar() {
   const regErrados = R.registro.filter(id => !REGISTRO.find(r => r.id === id).certo);
   acolhe -= regErrados.filter(id => id !== 'testemunhas').length * 10;
   acolhe -= sobrou.filter(e => ['pm', 'ct', 'caps'].includes(e)).length * 8;
+  // nota sobre o máximo possível no caso: sem sala reservada nem comunicação adaptada, o teto era 90
+  const tetoAcolhe = 45 + caso.dialogo.length * 15 + (caso.adaptada ? 15 : 0) + (caso.acoes.includes('reservado') ? 8 : 0);
+  acolhe = acolhe / tetoAcolhe * 100;
 
   const totalE = Object.values(E).reduce((a, b) => a + b, 0);
   const feitoE = Object.entries(E).reduce((a, [k, v]) => a + (fez(k) ? v : 0), 0);
@@ -647,7 +652,7 @@ function atualizarHud() {
 
 // ------------------------------------------------------------------------------------------------ dicas na hora certa
 function dica(chave, html) {
-  if (DICAS_VISTAS[chave]) return;
+  if (DICAS_VISTAS[chave] || DEMO.ativo) return;
   const el = $('#dica');
   el.innerHTML = `<p>💡 ${html}</p><button class="btn" data-a="entendi">Entendi</button>`;
   el.hidden = false;
@@ -727,19 +732,237 @@ function ajuda() {
       <li><b>Observe.</b> Para cada número na cena, diga se é <span class="tag risco">Sinal de risco</span>, se <span class="tag pista">Explica a causa</span> ou se <span class="tag esperado">Não é risco</span>.</li>
       <li><b>Aja.</b> Não há cronômetro. Cada ação passa um tempo da cena (30 a 45 s; mais 30 s se alguém precisar ser acionado). Nesse tempo a tensão sobe ou desce conforme os itens mostrados no alto da cena. Toque numa ação e escolha <b>quem faz</b>, conforme as responsabilidades do POP.</li>
       <li><b>Converse.</b> Depois de escolher um ${termos('interlocutor único')}, toque em <b>💬 Conversar</b> e escolha o que dizer.</li>
-      <li><b>Encaminhe e registre.</b> SAMU, pronto-socorro, CAPS, Conselho Tutelar ou seguir no AME; registro no prontuário e notificação ao NSP.</li>
+      <li><b>Encaminhe e registre.</b> SAMU, pronto-socorro, CAPS, Conselho Tutelar ou seguir no ambulatório; registro no prontuário e notificação ao NSP.</li>
     </ol>
-    <p class="sub">Algumas ações parecem resolver, mas vão contra o POP. O AME não faz ${termos('sedação')} nem contenção física para agitação. Palavras sublinhadas têm explicação: toque nelas.</p>
+    <p class="sub">Algumas ações parecem resolver, mas vão contra o POP. O ambulatório não faz ${termos('sedação')} nem contenção física para agitação. Palavras sublinhadas têm explicação: toque nelas.</p>
     <div class="acoes"><button class="btn" data-a="dicas">Mostrar as dicas de novo</button><button class="btn primario" data-a="ok">Entendi</button></div>`);
   $('[data-a="ok"]').onclick = () => { J.pausa = pausaAntes; fecharModal(); };
   $('[data-a="dicas"]').onclick = () => { for (const k of Object.keys(DICAS_VISTAS)) delete DICAS_VISTAS[k]; gravarLocal('acolher.dicas', DICAS_VISTAS); J.pausa = pausaAntes; fecharModal(); toast('As dicas vão aparecer de novo no próximo caso.'); };
+}
+
+
+// ================================================================================================ demonstracao narrada
+// O caso e jogado sozinho pelo procedimento do POP: a demonstracao clica nos mesmos botoes que o
+// jogador clicaria (com um destaque amarelo) e um narrador explica cada passo. Da para pausar,
+// avancar e mudar a velocidade; a velocidade tambem acelera a cena (a equipe anda mais rapido).
+const DEMO = { ativo: false, vel: 1, pausado: false, pular: false, abortar: false, passo: 0, narrT0: 0, pausaTotal: 0, pausaDesde: 0, narrPausa0: 0 };
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+async function esperaDemo(ms) {
+  let falta = ms;
+  while (falta > 0 && !DEMO.abortar) {
+    const t = Math.min(100, falta / DEMO.vel);
+    await dormir(t);
+    if (!DEMO.pausado) falta -= t * DEMO.vel;
+  }
+  if (DEMO.abortar) throw new Error('abortado');
+}
+function montarNarrador() {
+  const el = $('#narrador');
+  el.querySelector('[data-n="pausa"]').onclick = alternarPausaDemo;
+  el.querySelector('[data-n="prox"]').onclick = () => { DEMO.pular = true; };
+  el.querySelector('[data-n="sair"]').onclick = () => { DEMO.abortar = true; if (DEMO.pausado) alternarPausaDemo(); };
+  el.querySelectorAll('[data-vel]').forEach(b => b.onclick = () => { DEMO.vel = +b.dataset.vel; marcarVelDemo(); });
+  marcarVelDemo();
+}
+function marcarVelDemo() { document.querySelectorAll('#narrador [data-vel]').forEach(b => b.classList.toggle('ativa', +b.dataset.vel === DEMO.vel)); }
+function alternarPausaDemo() {
+  DEMO.pausado = !DEMO.pausado;
+  if (DEMO.pausado) DEMO.pausaDesde = performance.now(); else DEMO.pausaTotal += performance.now() - DEMO.pausaDesde;
+  $('#narrador [data-n="pausa"]').textContent = DEMO.pausado ? '▶ Continuar' : '⏸ Pausar';
+  $('#narrador').classList.toggle('pausado', DEMO.pausado);
+}
+function narrar(info) {
+  const el = $('#narrador');
+  el.hidden = false;
+  DEMO.passo++;
+  el.querySelector('.nar-fase').textContent = info.fase || '';
+  el.querySelector('.nar-passo').textContent = `passo ${DEMO.passo}`;
+  el.querySelector('.nar-tit').textContent = info.titulo || '';
+  el.querySelector('.nar-txt').innerHTML = info.texto || '';
+  const ref = el.querySelector('.nar-ref');
+  ref.textContent = info.ref || ''; ref.hidden = !info.ref;
+  el.querySelector('.nar-barra').style.width = '0%';
+  DEMO.narrT0 = performance.now(); DEMO.narrPausa0 = DEMO.pausaTotal;
+}
+function atualizarNarrador(html) { $('#narrador .nar-txt').innerHTML = html; }
+// tempo minimo de leitura do passo, contado desde que o texto apareceu (sem as pausas)
+async function leituraDemo(info) {
+  const seg = info.seg ?? clamp(String(info.texto || '').replace(/<[^>]+>/g, ' ').length / 18, 3, 12);
+  const total = seg * 1000, barra = $('#narrador .nar-barra');
+  let feito = (performance.now() - DEMO.narrT0 - (DEMO.pausaTotal - DEMO.narrPausa0)) * DEMO.vel;
+  while (feito < total && !DEMO.pular && !DEMO.abortar) {
+    await dormir(100);
+    if (!DEMO.pausado) feito += 100 * DEMO.vel;
+    barra.style.width = Math.min(100, feito / total * 100) + '%';
+  }
+  barra.style.width = '100%';
+  DEMO.pular = false;
+  if (DEMO.abortar) throw new Error('abortado');
+}
+async function etapaDemo(info, fn) {
+  if (DEMO.abortar) throw new Error('abortado');
+  narrar(info);
+  if (fn) await fn();
+  await leituraDemo(info);
+}
+// "dedo" da demonstracao: destaca o botao, espera um instante e clica
+async function clicar(sel, ms = 650) {
+  let el = null;
+  for (let i = 0; i < 40 && !el; i++) { el = typeof sel === 'string' ? document.querySelector(sel) : sel; if (!el) await esperaDemo(100); }
+  if (!el) throw new Error('demo: não achei ' + sel);
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  el.classList.add('toque');
+  await esperaDemo(ms);
+  el.classList.remove('toque');
+  el.click();
+  await esperaDemo(250);
+}
+async function esperarAcao(id) {
+  for (let i = 0; i < 300; i++) {
+    if (!J.R.ocupado.has(id)) return;
+    await esperaDemo(100);
+  }
+}
+
+const ORDEM_DEMO = ['reduzir', 'afastar', 'rota', 'naoSozinho', 'interlocutor', 'escrita', 'guiar', 'frasesCurtas', 'distancia', 'acompanhante', 'objetos',
+  'chamarMae', 'sinaisVitais', 'causasClinicas', 'avaliarRisco', 'reservado', 'orientarFamilia', 'rede'];
+const REF_DEMO = {
+  reduzir: 'POP · Condutas imediatas 1', afastar: 'POP · Condutas imediatas 2', interlocutor: 'POP · Condutas imediatas 3',
+  rota: 'POP · Responsáveis: controladores', objetos: 'Diretriz ABP 2019', distancia: 'Projeto BETA · domínios 1 e 2',
+  reservado: 'POP · Ajustes ambientais', acompanhante: 'POP · Ajustes ambientais', naoSozinho: 'Ministério da Saúde',
+  escrita: 'POP · Comunicação adaptada', guiar: 'POP · Comunicação adaptada', frasesCurtas: 'POP · Comunicação adaptada',
+  causasClinicas: 'POP · Responsáveis: médico', sinaisVitais: 'POP · Responsáveis: enfermagem', avaliarRisco: 'POP · Responsáveis: enfermagem',
+  orientarFamilia: 'POP · Responsáveis: psicologia', rede: 'POP · Responsáveis: serviço social', chamarMae: 'POP · Acolhimento',
+};
+const MOTIVO_ENC = {
+  ame: 'a situação foi controlada e o atendimento segue no ambulatório',
+  samu: 'há risco de dano: o POP manda acionar o SAMU 192',
+  ct: 'é adolescente com autolesão: o Serviço Social comunica o Conselho Tutelar (Lei 13.819/2019 e ECA)',
+  caps: 'seguimento na rede de saúde mental do município',
+  ps: 'avaliação de urgência no pronto-socorro de referência',
+  pm: 'houve crime ou ameaça à segurança',
+};
+// plano da demonstracao: as acoes certas do caso na ordem do POP, com quem faz cada uma
+function planoDemo(caso) {
+  const certas = caso.acoes.filter(a => ACOES[a].tipo !== 'armadilha');
+  const fala = caso.essenciais.chamar_enfermagem && caso.interlocutor.includes('enfermagem') ? 'enfermagem' : caso.interlocutor[0];
+  const plano = ORDEM_DEMO.filter(a => certas.includes(a)).map(id => {
+    const a = ACOES[id];
+    const papel = id === 'interlocutor' ? fala : a.papeis ? a.papeis[0] : id === 'reduzir' ? 'recepcao' : fala;
+    return { id, papel };
+  });
+  // a conversa entra assim que estiver liberada (interlocutor e, se houver, a comunicacao adaptada)
+  const libera = Math.max(plano.findIndex(p => p.id === 'interlocutor'), caso.dialogoExige ? plano.findIndex(p => p.id === caso.dialogoExige) : -1);
+  plano.splice(libera + 1, 0, 'conversa');
+  return plano;
+}
+
+async function rodarDemo(id) {
+  const caso = CASOS.find(c => c.id === id) || CASOS[0];
+  Object.assign(DEMO, { ativo: true, pausado: false, pular: false, abortar: false, passo: 0, pausaTotal: 0 });
+  J.demoFim = false;
+  document.body.classList.add('modo-demo');
+  esconderDica();
+  const F0 = 'Demonstração', F1 = '1 · Observar', F2 = '2 · Agir', F3 = '3 · Conversar', F4 = '4 · Encaminhar e registrar';
+  try {
+    iniciarCaso(caso.id);
+    await etapaDemo({ fase: F0, titulo: caso.titulo, seg: 9,
+      texto: `${esc(caso.local)}. A situação está na janela do caso.<p>Você só assiste: a equipe segue o POP passo a passo. Use os botões para pausar, avançar ou mudar a velocidade.</p>` });
+    await clicar('[data-a="ir"]');
+
+    // observar
+    await etapaDemo({ fase: F1, titulo: 'Ler a cena antes de agir', ref: 'POP · Identificação de sinais', seg: 7,
+      texto: 'Antes de agir, a equipe identifica o que está acontecendo. Cada número na cena é classificado: <b>sinal de risco</b> (pede ação pelo POP), <b>explica a causa</b> ou <b>não é risco</b>.' });
+    for (const [i, s] of caso.sinais.entries()) {
+      await etapaDemo({ fase: F1, titulo: `${i + 1} · ${s.txt}`, seg: 6, texto: `<b>${TIPOS[s.tipo]}.</b> ${et(s.exp)}` }, async () => {
+        destacar(i);
+        await clicar(`.sinais li[data-i="${i}"] [data-t="${s.tipo}"]`, 500);
+      });
+    }
+    await clicar('#b-confirmar');
+    await esperaDemo(1800);
+    await clicar('[data-a="agir"]');
+
+    // agir
+    await etapaDemo({ fase: F2, titulo: 'Condutas imediatas primeiro', ref: 'POP · Condutas imediatas', seg: 9,
+      texto: 'O POP define a ordem: <b>reduzir estímulos</b>, <b>afastar o público</b>, <b>eleger um interlocutor único</b> e manter comunicação calma. No alto da cena aparecem os fatores que estão subindo ↑ ou descendo ↓ a tensão.' });
+    for (const p of planoDemo(caso)) {
+      if (p === 'conversa') { await conversaDemo(caso); continue; }
+      const a = ACOES[p.id], ausente = !presente(p.papel), P = PAPEIS[p.papel];
+      const chamada = ausente ? (p.papel === 'enfermagem' ? ' A recepção aciona a enfermagem, que coordena o atendimento.' : ` ${P.nome} é acionada e chega em instantes.`) : '';
+      const base = `${P.icone} <b>${esc(P.nome)}</b>.${chamada} ${et(a.ok)}`;
+      await etapaDemo({ fase: F2, titulo: `${a.icone} ${a.nome}`, ref: REF_DEMO[p.id], texto: base }, async () => {
+        const antes = Math.round(J.R.tensao);
+        await clicar(`.carta[data-id="${p.id}"]`);
+        await clicar(`.grade-quem [data-p="${p.papel}"]`, 500);
+        await esperarAcao(p.id);
+        const depois = Math.round(J.R.tensao);
+        atualizarNarrador(`${base}<p class="nar-sub">Tensão ${antes} → <b>${depois}</b></p>`);
+      });
+    }
+    const armadilhas = caso.acoes.filter(a => ACOES[a].tipo === 'armadilha');
+    await etapaDemo({ fase: F2, titulo: 'O que não fazer neste caso', ref: 'POP · Finalidade', seg: 12,
+      texto: `<ul class="nar-lista um">${armadilhas.map(k => `<li class="pend"><i>✗</i><span><b>${esc(ACOES[k].nome)}</b> · ${et(ACOES[k].erro)}</span></li>`).join('')}</ul>` });
+
+    // encaminhar e registrar
+    const enc = caso.encaminhamento.certo;
+    const naoSe = caso.encaminhamento.errado.map(e => ENCAMINHAMENTOS[e].nome).join(', ');
+    await etapaDemo({ fase: F4, titulo: 'Encaminhamento', ref: 'POP · Encaminhamento', seg: 10,
+      texto: `${enc.map(e => `<b>${esc(ENCAMINHAMENTOS[e].nome)}</b>: ${et(MOTIVO_ENC[e])}.`).join('<br>')}<p class="nar-sub">Não se aplica aqui: ${esc(naoSe)}.</p>` }, async () => {
+      await clicar('#b-fechar');
+      if (document.querySelector('#modal-conteudo [data-v="sim"]')) await clicar('#modal-conteudo [data-v="sim"]');
+      for (const e of enc) await clicar(`[data-e="${e}"]`, 450);
+    });
+    await clicar('#modal-conteudo [data-a="ok"]');
+    await etapaDemo({ fase: F4, titulo: 'Registro e notificação', ref: 'POP · Comunicação e registro', seg: 10,
+      texto: 'No prontuário: <b>comportamento observado</b>, <b>medidas adotadas</b>, <b>serviços acionados</b> e <b>encaminhamento</b>. Sem rótulos (“surto”) nem opinião sobre a pessoa. Depois, notificar o NSP e marcar a reunião da equipe para revisar o atendimento.' }, async () => {
+      for (const r of REGISTRO.filter(x => x.certo)) await clicar(`[data-r="${r.id}"]`, 350);
+      await clicar('#c-nsp', 350); await clicar('#c-pos', 350);
+    });
+    await clicar('#modal-conteudo [data-a="ok"]');
+    await etapaDemo({ fase: 'Resultado', titulo: 'Para levar', seg: 12,
+      texto: `<ul class="nar-lista um">${caso.aprendizado.map(t => `<li class="ok"><i>✓</i><span>${et(t)}</span></li>`).join('')}</ul>` }, async () => {
+      const c = $('#modal-conteudo');
+      for (let y = 0; y < c.scrollHeight; y += 60) { c.scrollTop = y; await esperaDemo(120); }
+    });
+    $('#narrador').hidden = true;
+  } catch (e) {
+    if (e.message !== 'abortado') throw e;
+    $('#narrador').hidden = true;
+    telaMapa();
+  } finally {
+    DEMO.ativo = false;
+    document.body.classList.remove('modo-demo');
+    J.demoFim = true;
+  }
+}
+
+async function conversaDemo(caso) {
+  const R = J.R, D = R.dialogo, quem = PAPEIS[R.flags.interlocutor];
+  await clicar('.conversar');
+  for (let t = 0; t < caso.dialogo.length; t++) {
+    const T = caso.dialogo[t];
+    const falante = T.quem === 'acomp' ? caso.acompanhante.nome : caso.pessoa.nome;
+    await etapaDemo({ fase: '3 · Conversar', titulo: `${falante} diz`, seg: 6,
+      texto: `<i>“${esc(T.fala)}”</i><p class="nar-sub">${esc(quem.nome)} é o interlocutor único. Das três respostas, qual acolhe sem confrontar?</p>` });
+    const ops = D.opcoes, i = ops.findIndex(o => o.v === 'bom'), bom = ops[i];
+    const outras = ops.filter(o => o !== bom).map(o => `<li class="pend"><i>✗</i><span>“${esc(o.t.replace('{quem}', quem.quem))}” ${et(o.exp)}</span></li>`).join('');
+    await etapaDemo({ fase: '3 · Conversar', titulo: 'Resposta escolhida', seg: 13,
+      texto: `“${esc(bom.t.replace('{quem}', quem.quem))}”<p>${et(bom.exp)}</p><ul class="nar-lista um">${outras}</ul>` }, async () => {
+      await clicar(`[data-o="${i}"]`);
+    });
+    await clicar('.band-corpo [data-a="seguir"]', 400);
+  }
+  await clicar('[data-aba="acoes"]', 400);
 }
 
 // ================================================================================================ laco
 let anterior = performance.now(), relogio = 0;
 function laco(agora) {
   // dt limitado a 0,25 s: em aparelho lento (ou aba em segundo plano) a equipe anda aos saltos, mas chega
-  const dt = Math.min(0.25, (agora - anterior) / 1000); anterior = agora; relogio += dt;
+  const dt0 = Math.min(0.25, (agora - anterior) / 1000); anterior = agora;
+  const dt = DEMO.ativo ? (DEMO.pausado ? 0 : dt0 * DEMO.vel) : dt0;
+  relogio += dt;
   CENA.quadro(C, dt, relogio);
   posicionarSobre();
   requestAnimationFrame(laco);
@@ -752,4 +975,11 @@ C.redimensionar();
 CENA.montarCaso(C, CASOS[0]);
 CENA.tensaoVisual(C, CASOS[0].tensao);
 requestAnimationFrame(laco);
+montarNarrador();
 telaMapa();
+// ?demo=<caso> abre direto na demonstracao (ex.: ?demo=espera&vel=2)
+const qs = new URLSearchParams(location.search);
+if (qs.has('demo')) {
+  DEMO.vel = [1, 2, 4].includes(+qs.get('vel')) ? +qs.get('vel') : 1; marcarVelDemo();
+  rodarDemo(qs.get('demo'));
+}
