@@ -48,7 +48,8 @@ Para gravar um vídeo da demonstração (Chrome headless + ffmpeg):
 node ferramentas/gravar-demo.mjs gravar http://localhost:8140 espera midia/quadros 8 1
 ```
 
-e depois juntar os quadros com o ffmpeg. `validar` no lugar de `gravar` roda as demonstrações em 4× e
+e depois juntar os quadros com o ffmpeg (o comando está no topo do script). A gravação também salva
+`roteiro.json` com o texto de cada passo do narrador, o que é tocado na tela e o tempo de cada um. `validar` no lugar de `gravar` roda as demonstrações em 4× e
 mostra a pontuação de cada caso.
 
 ## Casos

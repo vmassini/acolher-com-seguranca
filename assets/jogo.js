@@ -260,7 +260,7 @@ async function executar(id, papel) {
   let chegada = 0;
   if (!presente(papel)) {
     R.presentes.add(papel); R.chamadas.push(papel); chegada = CHEGADA;
-    toast(`📣 ${PAPEIS[papel].nome} acionada.`);
+    toast(`📣 ${PAPEIS[papel].nome} a caminho.`);
     await CENA.entrar(C, papel);
   }
   // reservado so funciona se a tensao ja baixou um pouco
@@ -889,7 +889,7 @@ async function rodarDemo(id) {
     for (const p of planoDemo(caso)) {
       if (p === 'conversa') { await conversaDemo(caso); continue; }
       const a = ACOES[p.id], ausente = !presente(p.papel), P = PAPEIS[p.papel];
-      const chamada = ausente ? (p.papel === 'enfermagem' ? ' A recepção aciona a enfermagem, que coordena o atendimento.' : ` ${P.nome} é acionada e chega em instantes.`) : '';
+      const chamada = ausente ? (p.papel === 'enfermagem' ? ' A recepção aciona a enfermagem, que coordena o atendimento.' : ` ${P.nome} a caminho: chega em instantes.`) : '';
       const base = `${P.icone} <b>${esc(P.nome)}</b>.${chamada} ${et(a.ok)}`;
       await etapaDemo({ fase: F2, titulo: `${a.icone} ${a.nome}`, ref: REF_DEMO[p.id], texto: base }, async () => {
         const antes = Math.round(J.R.tensao);
